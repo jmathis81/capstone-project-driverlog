@@ -1,4 +1,6 @@
 import { NavLink } from "react-router-dom";
+import { useEffect, useState} from "react";
+import { getSummaries } from "../api/driverlogAPI";
 
 export default function Dashboard() {
   const cards = [
@@ -19,6 +21,27 @@ export default function Dashboard() {
     down: "bg-red-50 text-red-700 border-red-200",
     warn: "bg-amber-50 text-amber-700 border-amber-200",
   };
+
+  const [summaries, setSummaries] = useState([]);
+  const [backendStatus, setBackendStatus] = useState("Loading summaries...");
+  const [backendError, setBackendError] = useState(null);
+
+  useEffect(() => {
+    async function load(){
+        try {
+            setBackendError(null);
+            const data = await getSummaries();
+            setSummaries(Array.isArray(data) ? data : []);
+            setBackendStatus("Connected");
+        } catch (error) {
+            setBackendStatus("Not connected");
+            setBackendError(error.message);
+            setSummaries([]);
+        }
+    }
+    load();
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -115,6 +138,20 @@ export default function Dashboard() {
           </div>
 
           <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+            {/* Backend connection proof */}
+            <div className="rounded-2xl bg-white border shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900">Backend Connection</h2>
+              <p className="text-sm text-gray-600 mt-1">{backendStatus}</p>
+
+              <p className="text-sm text-gray-700 mt-3">
+                Summaries found: <span className="font-semibold">{summaries.length}</span>
+              </p>
+
+              <pre className="mt-3 text-xs bg-gray-50 border rounded-lg p-3 overflow-auto max-h-64">
+                {JSON.stringify(summaries.slice(0, 5), null, 2)}
+              </pre>
+            </div>
+
             {/* Stat cards row */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {cards.map((item) => (
