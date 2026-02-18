@@ -1,6 +1,8 @@
 const { app } = require("@azure/functions");
 const { routeSummaries } = require("../../shared/cosmosClient");
 
+//for getting summaries of routes
+
 app.http("getSummaries", {
   methods: ["GET"],
   authLevel: "anonymous",
