@@ -47,9 +47,16 @@ app.http("endRoute", {
         totalDistanceMeters += haversineDistance(points[i - 1], points[i]);
       }
 
+      // Check if epoch time is in milliseconds or seconds and calculate to seconds
+      const normalizeToSeconds = (ts) => {
+        return ts > 1e12 ? ts / 1000 : ts;
+      };
+
       const start = points[0];
       const end = points[points.length - 1];
-      const durationSeconds = end.ts - start.ts;
+      const startTs = normalizeToSeconds(start.ts);
+      const endTs = normalizeToSeconds(end.ts);
+      const durationSeconds = endTs - startTs;
 
       const avgSpeedMps =
         durationSeconds > 0 ? totalDistanceMeters / durationSeconds : 0;
