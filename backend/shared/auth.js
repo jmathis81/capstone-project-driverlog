@@ -11,13 +11,18 @@ function getUserFromRequest(req) {
   const getClaim = (type) =>
     claims.find(c => c.typ === type)?.val;
 
+  // Prefer modern Entra ID claims
+  const username =
+      getClaim("preferred_username") ||
+      getClaim("email") ||
+      getClaim("upn") ||
+      getClaim("name");
+
   return {
     userId: getClaim(
       "http://schemas.microsoft.com/identity/claims/objectidentifier"
     ),
-    username: getClaim(
-      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
-    ),
+    username,
     identityProvider: principal.auth_typ,
     claims
   };
