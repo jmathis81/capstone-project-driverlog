@@ -1,7 +1,7 @@
 const { app } = require("@azure/functions");
 const { v4: uuid } = require("uuid");
 const { routes } = require("../../shared/cosmosClient");
-
+const { getUserFromRequest } = require("../../shared/auth");
 
 app.http("startRoute", {
   methods: ["POST"],
@@ -9,14 +9,22 @@ app.http("startRoute", {
   authLevel: "anonymous",
   handler: async (req, context) => {
     try {
-      const userId = "test-user"; // later from Entra ID
+      //added for auth to get user info
+      const user = getUserFromRequest(req);
+      if (!user) {
+        return { status: 401, body: "Unauthorized" };
+      }
+
+      //For testing without auth to add user infor to route. enable (remove comment) if auth disabled for testing
+      //const userId = "test-user"; // later from Entra ID
 
       const routeId = `r-${uuid()}`;
 
       const route = {
         id: routeId,
         routeId,
-        userId,
+        userId: user.userId,
+        username: user.username,
         status: "active",
         startTime: new Date().toISOString()
       };

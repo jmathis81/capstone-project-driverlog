@@ -1,6 +1,6 @@
 const { app } = require("@azure/functions");
-const { routePoints } = require("../../shared/cosmosClient");
-
+const { routes, routePoints } = require("../../shared/cosmosClient");
+const { getUserFromRequest } = require("../../shared/auth");
 
 app.http("uploadPoints", {
   methods: ["POST"],
@@ -8,12 +8,40 @@ app.http("uploadPoints", {
   authLevel: "anonymous",
   handler: async (req, context) => {
     try {
+      //added for auth to check if user is signed in
+      const user = getUserFromRequest(req);
+
+      if (!user) {
+        return { status: 401, body: "Unauthorized" };
+      }
+
       const routeId = req.params.routeId;
       const body = await req.json();
       const points = body?.points;
 
       //Get client json file sent for logging
       context.log("HTTP request body:", body);
+
+      // 1. Fetch route so we can check if user owns route
+      const { resources: routeResults } = await routes.items.query({
+        query: "SELECT * FROM c WHERE c.routeId = @routeId",
+        parameters: [{ name: "@routeId", value: routeId }]
+      }).fetchAll();
+
+      if (!routeResults.length) {
+        return { status: 404, body: "Route not found" };
+      }
+
+      const route = routeResults[0];
+
+
+      //check if user owns route
+      if (route.userId !== user.userId) {
+        return {
+          status: 403,
+          body: "You do not own this route"
+        };
+      }
 
       if (!routeId || !Array.isArray(points)) {
         return { status: 400, body: "Invalid payload" };

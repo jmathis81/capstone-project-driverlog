@@ -1,6 +1,7 @@
 const { app } = require("@azure/functions");
 const { routes, routePoints, routeSummaries } = require("../../shared/cosmosClient");
 const { haversineDistance } = require("../../shared/haversine");
+const { getUserFromRequest } = require("../../shared/auth");
 
 app.http("endRoute", {
   methods: ["POST"],
@@ -8,6 +9,13 @@ app.http("endRoute", {
   authLevel: "anonymous",
   handler: async (req, context) => {
     try {
+      //added for auth to check if user is signed in
+      const user = getUserFromRequest(req);
+
+      if (!user) {
+        return { status: 401, body: "Unauthorized" };
+      }
+
       const routeId = req.params.routeId;
 
       // 1. Fetch route to get correct partition key
@@ -21,6 +29,14 @@ app.http("endRoute", {
       }
 
       const route = routeResults[0];
+
+      //check to ensure user owns route being ended
+      if (route.userId !== user.userId) {
+        return {
+          status: 403,
+          body: "You do not own this route"
+        };
+      }
 
       // 🚫 Prevent ending an already completed route.
       if (route.status === "completed") {
@@ -65,6 +81,7 @@ app.http("endRoute", {
         id: routeId,
         routeId,
         userId: route.userId,
+        username: route.username,
 
         pointCount: points.length,
         durationSeconds,
