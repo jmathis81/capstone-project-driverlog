@@ -1,5 +1,5 @@
 const { app } = require("@azure/functions");
-const { routePoints } = require("../../shared/cosmosClient");
+const { routes, routePoints } = require("../../shared/cosmosClient");
 const { getUserFromRequest } = require("../../shared/auth");
 
 app.http("uploadPoints", {
@@ -21,6 +21,19 @@ app.http("uploadPoints", {
 
       //Get client json file sent for logging
       context.log("HTTP request body:", body);
+
+      // 1. Fetch route so we can check if user owns route
+      const { resources: routeResults } = await routes.items.query({
+        query: "SELECT * FROM c WHERE c.routeId = @routeId",
+        parameters: [{ name: "@routeId", value: routeId }]
+      }).fetchAll();
+
+      if (!routeResults.length) {
+        return { status: 404, body: "Route not found" };
+      }
+
+      const route = routeResults[0];
+
 
       //check if user owns route
       if (route.userId !== user.userId) {
