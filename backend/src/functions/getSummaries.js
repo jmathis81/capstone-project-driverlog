@@ -1,6 +1,6 @@
 const { app } = require("@azure/functions");
 const { routeSummaries } = require("../../shared/cosmosClient");
-const { getUserFromRequest } = require("../../shared/auth");
+const { requireUser } = require("../../shared/auth");
 
 //for getting summaries of routes
 
@@ -10,10 +10,8 @@ app.http("getSummaries", {
   handler: async (req, context) => {
     try {
       //get signed in user info
-      const user = getUserFromRequest(req);
-      if (!user) {
-        return { status: 401, body: "Unauthorized" };
-      }
+      const user = requireUser(req);
+
 
       //database query to pull last 25 routes for user
       const query = {
