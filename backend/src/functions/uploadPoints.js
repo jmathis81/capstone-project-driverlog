@@ -1,6 +1,6 @@
 const { app } = require("@azure/functions");
 const { routes, routePoints } = require("../../shared/cosmosClient");
-const { getUserFromRequest } = require("../../shared/auth");
+const { requireUser } = require("../../shared/auth");
 
 app.http("uploadPoints", {
   methods: ["POST"],
@@ -9,11 +9,7 @@ app.http("uploadPoints", {
   handler: async (req, context) => {
     try {
       //added for auth to check if user is signed in
-      const user = getUserFromRequest(req);
-
-      if (!user) {
-        return { status: 401, body: "Unauthorized" };
-      }
+      const user = requireUser(req);
 
       const routeId = req.params.routeId;
       const body = await req.json();

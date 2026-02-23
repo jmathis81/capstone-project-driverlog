@@ -1,7 +1,7 @@
 const { app } = require("@azure/functions");
 const { routes, routePoints, routeSummaries } = require("../../shared/cosmosClient");
 const { haversineDistance } = require("../../shared/haversine");
-const { getUserFromRequest } = require("../../shared/auth");
+const { requireUser } = require("../../shared/auth");
 
 app.http("endRoute", {
   methods: ["POST"],
@@ -10,11 +10,8 @@ app.http("endRoute", {
   handler: async (req, context) => {
     try {
       //added for auth to check if user is signed in
-      const user = getUserFromRequest(req);
+      const user = requireUser(req);
 
-      if (!user) {
-        return { status: 401, body: "Unauthorized" };
-      }
 
       const routeId = req.params.routeId;
 

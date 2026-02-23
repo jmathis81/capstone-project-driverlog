@@ -50,7 +50,7 @@ function requireUser(req) {
 }
 
 /**
- * Require specific role helper
+ * Require a single specific role helper
  */
 function requireRole(user, role) {
   if (!user.roles.includes(role)) {
@@ -61,7 +61,7 @@ function requireRole(user, role) {
 }
 
 /**
- * Require any role helper
+ * Require any listed role helper
  */
 function requireAnyRole(user, allowedRoles) {
   const hasRole = allowedRoles.some(role =>
@@ -75,5 +75,19 @@ function requireAnyRole(user, allowedRoles) {
   }
 }
 
+/**
+ * Require all listed roles helper
+ */
+function requireAllRoles(user, roles) {
+  const hasAll = roles.every(role =>
+    user.roles.includes(role)
+  );
 
-module.exports = { getUserFromRequest, requireUser, requireRole, requireAnyRole };
+  if (!hasAll) {
+    const error = new Error("Forbidden");
+    error.status = 403;
+    throw error;
+  }
+}
+
+module.exports = { getUserFromRequest, requireUser, requireRole, requireAnyRole, requireAllRoles };
