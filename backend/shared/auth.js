@@ -64,8 +64,13 @@ function requireRole(user, role) {
  * Require any listed role helper
  */
 function requireAnyRole(user, allowedRoles) {
+
+  const userRoles =
+    user.roles ||
+    (user.role ? [user.role] : []);
+
   const hasRole = allowedRoles.some(role =>
-    user.roles.includes(role)
+    userRoles.includes(role)
   );
 
   if (!hasRole) {
