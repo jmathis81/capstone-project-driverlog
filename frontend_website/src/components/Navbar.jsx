@@ -1,4 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
+import { getEmail, logout } from "../auth/authService";
 
 const linkClass = ({ isActive }) =>
   [
@@ -7,6 +8,9 @@ const linkClass = ({ isActive }) =>
   ].join(" ");
 
 export default function Navbar() {
+
+    const email = getEmail();
+
     return (
         <header className= "border-b bg-white">
             <div className= "mx-auto max-w-6xl px-4 py-3 flex justify-between">
@@ -20,7 +24,16 @@ export default function Navbar() {
                     <NavLink to="/assignments" className={linkClass}>Assignments</NavLink>
                     <NavLink to="/reports" className={linkClass}>Reports</NavLink>
                     <NavLink to="/flagged" className={linkClass}>Flagged</NavLink>
-                    <NavLink to="/Login" className={linkClass}>Login</NavLink>
+
+                    {email && (
+                        <span className="text-sm text-gray-600 ml-4">
+                            Signed in as : <b>{email}</b>
+                        </span>
+                    )}
+
+                    <button className="ml-3 px-3 py-2 rounded bg-gray-900 text-white text-sm" onClick={logout}>
+                        Logout
+                    </button>
 
                 </nav>
 

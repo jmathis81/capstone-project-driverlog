@@ -22,15 +22,20 @@ export default function Dashboard() {
     warn: "bg-amber-50 text-amber-700 border-amber-200",
   };
 
+  //stores the data coming from your backend
   const [summaries, setSummaries] = useState([]);
+  //shows if the backend is connected or not
   const [backendStatus, setBackendStatus] = useState("Loading summaries...");
+  //stores any error message if something goes wrong
   const [backendError, setBackendError] = useState(null);
 
   useEffect(() => {
     async function load(){
         try {
             setBackendError(null);
+            //Get route summaries from Azure
             const data = await getSummaries();
+            //Saves the backend data and updates the status to "Connected"
             setSummaries(Array.isArray(data) ? data : []);
             setBackendStatus("Connected");
         } catch (error) {
@@ -57,7 +62,7 @@ export default function Dashboard() {
             <div className="text-xs font-semibold text-gray-400 px-3 py-2">HOME</div>
 
             <NavLink
-                to="/dashboard"
+                to="/"
                 className={({ isActive }) =>
                     "flex items-center gap-2 px-3 py-2 rounded-lg " +
                     (isActive ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-100")
@@ -101,18 +106,6 @@ export default function Dashboard() {
                 <span>Flagged</span>
             </NavLink>
 
-            <div className="mt-6 text-xs font-semibold text-gray-400 px-3 py-2">SETTINGS</div>
-
-            <NavLink
-                to="/Login"
-                className={({ isActive }) =>
-                    "flex items-center gap-2 px-3 py-2 rounded-lg " +
-                    (isActive ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-100")
-                }
-            >
-                <span>👤</span>
-                <span>Account</span>
-            </NavLink>
           </nav>
         </aside>
 
@@ -148,7 +141,7 @@ export default function Dashboard() {
               </p>
 
               <pre className="mt-3 text-xs bg-gray-50 border rounded-lg p-3 overflow-auto max-h-64">
-                {JSON.stringify(summaries.slice(0, 5), null, 2)}
+                {JSON.stringify(summaries, null, 2)}
               </pre>
             </div>
 
@@ -255,7 +248,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Optional: space for future chart/table section like the template */}
+          
             <div className="rounded-2xl bg-white border shadow-sm p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">Reports Overview</h2>
