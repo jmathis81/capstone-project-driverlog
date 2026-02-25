@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -18,6 +19,19 @@
         <activity
             android:name=".RouteManagementActivity"
             android:exported="false" />
+        <activity
+            android:exported="true"
+            android:name="com.microsoft.identity.client.BrowserTabActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host = "auth"
+                    android:scheme="msal8a653568-603e-4249-aa36-373da6f46ffa"/>
+            </intent-filter>
+        </activity>
         <activity
             android:name=".HistoryActivity"
             android:exported="false" />

@@ -1,6 +1,7 @@
 package com.example.driverlogapp;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -33,6 +34,10 @@ import okhttp3.*;
 
 public class MainActivity extends AppCompatActivity {
 
+    EditText editText;
+
+
+
     private ISingleAccountPublicClientApplication mSingleAccountApp;
     private String accessToken;
     private static final String[] scopes = {"api://8a653568-903e-4249-aa36-373da6f46ffa/access_as_user"};
@@ -41,8 +46,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        editText = findViewById(R.id.editTextText);
+
 
         initializeMsal();
+
+
     }
     private void initializeMsal() {
         PublicClientApplication.createSingleAccountPublicClientApplication(MainActivity.this, R.raw.auth_config, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
@@ -54,7 +63,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(MsalException exception) {
-                Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "initialize Error" + exception.getMessage(), Toast.LENGTH_SHORT).show();
+                editText.setText(exception.getMessage());
             }
         });
     }
@@ -81,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(MsalException exception) {
-                Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "loadAccount Error" + exception.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -97,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(MsalException exception) {
-                Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "signIn Error" + exception.getMessage(), Toast.LENGTH_SHORT).show();
             }
 
             @Override

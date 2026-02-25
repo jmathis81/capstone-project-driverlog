@@ -51,7 +51,7 @@ public class RouteManagementActivity extends AppCompatActivity {
         historyBtn = findViewById(R.id.history_view);
 
         // Initialize the location provider client
-        locationClient = LocationServices.getFusedLocationProviderClient(this);
+        locationClient = LocationServices.getFusedLocationProviderClient(RouteManagementActivity.this);
 
         // Set a click listener for the button
         getLocationBtn.setOnClickListener(v -> routeManagement());
