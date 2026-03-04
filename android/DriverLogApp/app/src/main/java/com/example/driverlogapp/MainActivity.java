@@ -34,8 +34,7 @@ import okhttp3.*;
 
 public class MainActivity extends AppCompatActivity {
 
-    EditText editText;
-
+    //EditText editText;
 
 
     private ISingleAccountPublicClientApplication mSingleAccountApp;
@@ -46,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        editText = findViewById(R.id.editTextText);
+        //editText = findViewById(R.id.editTextText);
 
 
         initializeMsal();
@@ -62,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(MsalException exception) {
                 Toast.makeText(MainActivity.this, "initialize Error" + exception.getMessage(), Toast.LENGTH_SHORT).show();
-                editText.setText(exception.getMessage());
+                //editText.setText(exception.getMessage());
             }
         });
     }
@@ -90,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(MsalException exception) {
                 Toast.makeText(MainActivity.this, "loadAccount Error" + exception.getMessage(), Toast.LENGTH_SHORT).show();
-                editText.setText(exception.getMessage());
+                //editText.setText(exception.getMessage());
             }
         });
     }
@@ -108,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(MsalException exception) {
                 Toast.makeText(MainActivity.this, "signIn Error" + exception.getMessage(), Toast.LENGTH_SHORT).show();
-                editText.setText(exception.getMessage());
+                //editText.setText(exception.getMessage());
             }
 
             @Override
@@ -132,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(MsalException exception) {
-                editText.setText(exception.getMessage());
+                //editText.setText(exception.getMessage());
             }
 
         });
