@@ -17,6 +17,9 @@ export const msalConfig = {
     cacheLocation: "sessionStorage",
     storeAuthStateInCookie: false,
   },
+  system: {
+    allowRedirectInIframe: false,
+  }
 };
 
 export const loginRequest = {

@@ -1,5 +1,7 @@
 const { app } = require("@azure/functions");
-const { getUserFromRequest } = require("../../shared/auth");
+//const { getUserFromRequest } = require("../../shared/auth");
+const { requireUser } = require("../../shared/auth");
+const { getOrCreateUser } = require("../../shared/userService");
 
 app.http("me", {
   methods: ["GET"],
@@ -7,7 +9,9 @@ app.http("me", {
   authLevel: "anonymous", // Easy Auth will handle protection
   handler: async (req, context) => {
     try {
-      const user = getUserFromRequest(req);
+      //const user = getUserFromRequest(req);
+      const authUser = requireUser(req);
+      const user = await getOrCreateUser(authUser);
 
       if (!user) {
         return {
@@ -21,7 +25,8 @@ app.http("me", {
         jsonBody: {
           userId: user.userId,
           email: user.username,
-          identityProvider: user.identityProvider
+          identityProvider: user.identityProvider,
+          role: user.role,
         }
       };
 
