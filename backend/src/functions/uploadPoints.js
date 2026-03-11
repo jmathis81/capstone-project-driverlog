@@ -1,6 +1,7 @@
 const { app } = require("@azure/functions");
 const { routes, routePoints } = require("../../shared/cosmosClient");
 const { requireUser } = require("../../shared/auth");
+const { haversineDistance } = require("../../shared/haversineDistance");
 
 app.http("uploadPoints", {
   methods: ["POST"],
@@ -39,10 +40,28 @@ app.http("uploadPoints", {
         };
       }
 
-      if (!routeId || !Array.isArray(points)) {
+      if (!routeId || !Array.isArray(points) || points.length === 0) {
         return { status: 400, body: "Invalid payload" };
       }
 
+      //Sort points
+      points.sort((a, b) => a.ts - b.ts);
+
+      //computer distanceFromPrev
+      for (let i = 0; i < points.length; i++) {
+        if (i === 0) {
+          points[i].distanceFromPrev = 0;
+          continue;
+        }
+
+        const prev = points[i - 1];
+        const curr = points[i];
+
+        points[i].distanceFromPrev = haversineDistance(prev, curr);
+      }
+
+      
+      //Add to DB
       const operations = points.map(p => ({
         operationType: "Create",
         resourceBody: {
