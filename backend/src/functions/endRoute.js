@@ -2,7 +2,7 @@ const { app } = require("@azure/functions");
 const { routes, routePoints, routeSummaries } = require("../../shared/cosmosClient");
 const { haversineDistance } = require("../../shared/haversine");
 const { requireUser } = require("../../shared/auth");
-const calculateIdleTime = require("../../shared/calculateIdleTime");
+const { calculateIdleTime } = require("../../shared/calculateIdleTime");
 
 app.http("endRoute", {
   methods: ["POST"],
