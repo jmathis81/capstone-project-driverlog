@@ -1,7 +1,7 @@
 const { app } = require("@azure/functions");
 const { routes, routePoints } = require("../../shared/cosmosClient");
 const { requireUser } = require("../../shared/auth");
-const { haversineDistance } = require("../../shared/haversineDistance");
+const { haversineDistance } = require("../../shared/haversine");
 
 app.http("uploadPoints", {
   methods: ["POST"],
