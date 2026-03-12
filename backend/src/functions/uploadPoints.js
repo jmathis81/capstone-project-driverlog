@@ -44,22 +44,30 @@ app.http("uploadPoints", {
         return { status: 400, body: "Invalid payload" };
       }
 
-      //Sort points
-      points.sort((a, b) => a.ts - b.ts);
+      // We only receive one point per request
+      const currPoint = points[0];
 
-      //computer distanceFromPrev
-      for (let i = 0; i < points.length; i++) {
-        if (i === 0) {
-          points[i].distanceFromPrev = 0;
-          continue;
-        }
+      // Get the last point already stored for this route
+      const { resources: lastPoints } = await routePoints.items
+        .query({
+          query: `
+            SELECT TOP 1 c.lat, c.lon, c.ts
+            FROM c
+            WHERE c.routeId = @routeId
+            ORDER BY c.ts DESC
+          `,
+          parameters: [{ name: "@routeId", value: routeId }]
+        })
+        .fetchAll();
 
-        const prev = points[i - 1];
-        const curr = points[i];
+      const prevPoint = lastPoints[0];
 
-        points[i].distanceFromPrev = haversineDistance(prev, curr);
+      // Calculate distance
+      if (!prevPoint) {
+        currPoint.distanceFromPrev = 0;
+      } else {
+        currPoint.distanceFromPrev = haversineDistance(prevPoint, currPoint);
       }
-
       
       //Add to DB
       const operations = points.map(p => ({
