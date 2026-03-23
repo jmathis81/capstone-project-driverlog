@@ -46,6 +46,8 @@ public class RouteManagementActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route_management);
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         editText = findViewById(R.id.editTextText);
 
         isRunning = false;
