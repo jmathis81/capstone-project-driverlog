@@ -2,6 +2,7 @@ const { app } = require("@azure/functions");
 const { routes, routePoints, routeSummaries } = require("../../shared/cosmosClient");
 const { haversineDistance } = require("../../shared/haversine");
 const { requireUser } = require("../../shared/auth");
+const { calculateIdleTime } = require("../../shared/calculateIdleTime");
 
 app.http("endRoute", {
   methods: ["POST"],
@@ -56,8 +57,8 @@ app.http("endRoute", {
       // 3. Calculate distance
       let totalDistanceMeters = 0;
 
-      for (let i = 1; i < points.length; i++) {
-        totalDistanceMeters += haversineDistance(points[i - 1], points[i]);
+      for (let i = 0; i < points.length; i++) {
+        totalDistanceMeters += points[i].distanceFromPrev ?? 0;
       }
 
       // Check if epoch time is in milliseconds or seconds and calculate to seconds
@@ -71,8 +72,18 @@ app.http("endRoute", {
       const endTs = normalizeToSeconds(end.ts);
       const durationSeconds = endTs - startTs;
 
+      // Calculate idle time
+      const idleSeconds = calculateIdleTime(points);
+
+      // Calculate moving time
+      const movingSeconds = Math.max(0, durationSeconds - idleSeconds);
+
       const avgSpeedMps =
         durationSeconds > 0 ? totalDistanceMeters / durationSeconds : 0;
+      
+      const avgMovingSpeedMps =
+        movingSeconds > 0 ? totalDistanceMeters / movingSeconds : 0;
+
       
       const summary = {
         id: routeId,
@@ -85,7 +96,10 @@ app.http("endRoute", {
 
         totalDistanceMeters,
         totalDistanceMiles: totalDistanceMeters / 1609.344,
+        averageMovingSpeedMph: avgMovingSpeedMps * 2.23694,
         averageSpeedMph: avgSpeedMps * 2.23694,
+        idleSeconds,
+        movingSeconds,
 
         completedAt: new Date().toISOString()
       };

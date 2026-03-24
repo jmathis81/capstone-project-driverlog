@@ -1,6 +1,7 @@
 const { app } = require("@azure/functions");
 const { routes, routePoints } = require("../../shared/cosmosClient");
 const { requireUser } = require("../../shared/auth");
+const { haversineDistance } = require("../../shared/haversine");
 
 app.http("uploadPoints", {
   methods: ["POST"],
@@ -39,10 +40,42 @@ app.http("uploadPoints", {
         };
       }
 
-      if (!routeId || !Array.isArray(points)) {
+      if (!routeId || !Array.isArray(points) || points.length === 0) {
         return { status: 400, body: "Invalid payload" };
       }
 
+      // Sort incoming points by timestamp
+      points.sort((a, b) => a.ts - b.ts);
+
+      // Get the last stored point for the route
+      const { resources: lastPoints } = await routePoints.items
+        .query({
+          query: `
+            SELECT TOP 1 c.lat, c.lon, c.ts
+            FROM c
+            WHERE c.routeId = @routeId
+            ORDER BY c.ts DESC
+          `,
+          parameters: [{ name: "@routeId", value: routeId }]
+        })
+        .fetchAll();
+
+      let prevPoint = lastPoints[0] ?? null;
+
+      // Calculate distanceFromPrev for each new point
+      for (let i = 0; i < points.length; i++) {
+        const curr = points[i];
+
+        if (!prevPoint) {
+          curr.distanceFromPrev = 0;
+        } else {
+          curr.distanceFromPrev = haversineDistance(prevPoint, curr);
+        }
+
+        prevPoint = curr;
+      }
+      
+      //Add to DB
       const operations = points.map(p => ({
         operationType: "Create",
         resourceBody: {

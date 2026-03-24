@@ -6,3 +6,4 @@ require("./functions/getRoutes");
 require("./functions/createAssignment");
 require("./functions/updateAssignStatus");
 require("./functions/getAssignments");
+require("./functions/me");
