@@ -10,6 +10,7 @@ require("./src/functions/getRoutes");
 require("./src/functions/createAssignment");
 require("./src/functions/updateAssignStatus");
 require("./src/functions/getAssignments");
+require("./src/functions/getRoutePolyline");
 
 // Set up the Functions app
 app.setup({ enableHttpStream: true });
