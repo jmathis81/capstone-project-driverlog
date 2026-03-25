@@ -2,6 +2,7 @@ package com.example.driverlogapp;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -17,6 +18,9 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.*;
 import com.google.android.gms.location.*;
+import com.microsoft.identity.client.IAuthenticationResult;
+import com.microsoft.identity.client.SilentAuthenticationCallback;
+import com.microsoft.identity.client.exception.MsalException;
 
 
 import java.io.IOException;
@@ -47,12 +51,14 @@ public class RouteManagementActivity extends AppCompatActivity {
         setContentView(R.layout.activity_route_management);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         editText = findViewById(R.id.editTextText);
 
         isRunning = false;
 
         accessToken = getIntent().getStringExtra("accessToken");
+        scheduleTokenRefresh();
 
         // Initialize Buttons from layout
         getLocationBtn = findViewById(R.id.routeControl);
@@ -191,9 +197,10 @@ public class RouteManagementActivity extends AppCompatActivity {
                     .post(body)
                     .build();
             Response response = client.newCall(request).execute();
+            if (response.code() == 401) {
+                refreshAccessToken();
+            }
             response.close();
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -220,6 +227,9 @@ public class RouteManagementActivity extends AppCompatActivity {
                         routeID[0] = routeID[0].substring(12);
                         routeID[0] = routeID[0].substring(0, routeID[0].length() - 2);
                     }
+                }
+                if (response.code() == 401) {
+                    refreshAccessToken();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -256,6 +266,9 @@ public class RouteManagementActivity extends AppCompatActivity {
                         summary[0] = responseBody.string();
                     }
                 }
+                if (response.code() == 401) {
+                    refreshAccessToken();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -283,80 +296,41 @@ public class RouteManagementActivity extends AppCompatActivity {
             Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
         }
     }
-}
 
+    public void refreshAccessToken() {
+        if (MainActivity.instance != null) return;
 
-/*public class MainActivity extends AppCompatActivity {
-
-    // Declare variables
-    private FusedLocationProviderClient locationClient;
-    private TextView locationText;
-    private static final int LOCATION_PERMISSION_REQUEST = 1001;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        // Initialize TextView and Button from layout
-        locationText = findViewById(R.id.editTextText);
-        Button getLocationBtn = findViewById(R.id.routeControl);
-
-        // Initialize the location provider client
-        locationClient = LocationServices.getFusedLocationProviderClient(this);
-
-        // Set a click listener for the button
-        getLocationBtn.setOnClickListener(v -> getCurrentLocation());
-    }
-
-    // Function to get the current location
-    private void getCurrentLocation() {
-        // Check if location permission is granted
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // Request permission if not granted
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST);
-            return;
-        }
-
-
-        // Fetch the last known location
-        locationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+        MainActivity.instance.refreshAccessTokenSilent(new SilentAuthenticationCallback() {
             @Override
-            public void onSuccess(Location location) {
-                //crashed with this line of code, presumably because location is null
-                //Toast.makeText(MainActivity.this, "location " + location.getLatitude(), Toast.LENGTH_SHORT).show();
-                if (location != null) {
-                    // Get latitude and longitude
-                    double lat = location.getLatitude();
-                    double lon = location.getLongitude();
-                    Toast.makeText(MainActivity.this, "location success", Toast.LENGTH_SHORT).show();
+            public void onSuccess(IAuthenticationResult authenticationResult) {
+                accessToken = authenticationResult.getAccessToken();
+            }
 
-                    // Display location in TextView
-                    locationText.setText("Latitude: " + lat + "\nLongitude: " + lon);
-                }
-                else if (location == null) {
-                    // Display error message if location is null
-                    locationText.setText("Unable to get location");
-                }
-                else {
-                    locationText.setText("Something is wrong");
-                }
+            @Override
+            public void onError(MsalException exception) {
+                Intent intent = new Intent(RouteManagementActivity.this, MainActivity.class);
+                startActivity(intent);
             }
         });
     }
 
-    // Handle the result of the permission request
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    public void scheduleTokenRefresh() {
+        long refreshInterval = 55 * 60 * 1000; // 55 minutes in milliseconds
 
-        if (requestCode == LOCATION_PERMISSION_REQUEST && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            // If permission is granted, fetch location
-            getCurrentLocation();
-        } else {
-            // If permission is denied, show message
-            locationText.setText("Location permission denied");
-        }
+        Thread refreshThread = new Thread(() -> {
+            while (isRunning) {
+                try {
+                    Thread.sleep(refreshInterval);
+                    if (isRunning) {
+                        refreshAccessToken();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    break;
+                }
+            }
+        });
+        refreshThread.setDaemon(true);
+        refreshThread.start();
     }
 }
-*/
