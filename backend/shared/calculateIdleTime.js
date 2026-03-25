@@ -3,8 +3,8 @@ function calculateIdleTime(points) {
 
   let idleSeconds = 0;
 
-  const DISTANCE_THRESHOLD = 4; // meters considered "no movement"
-  const MIN_IDLE_BLOCK = 5; // seconds required before counting idle
+  const DISTANCE_THRESHOLD = 5; // meters considered "no movement"
+  const MIN_IDLE_BLOCK = 20; // seconds required before counting idle
   // Check if epoch time is in milliseconds or seconds and calculate to seconds
   const normalizeToSeconds = (ts) => {
     return ts > 1e12 ? ts / 1000 : ts;
