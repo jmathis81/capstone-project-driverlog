@@ -40,6 +40,14 @@ app.http("uploadPoints", {
         };
       }
 
+      //Prevent uploading to already completed route
+      if (route.status?.toLowerCase() === "completed") {
+        return {
+          status: 403,
+          body: "Route is already completed. Cannot add new points"
+        };
+      }
+
       if (!routeId || !Array.isArray(points) || points.length === 0) {
         return { status: 400, body: "Invalid payload" };
       }
