@@ -7,3 +7,4 @@ require("./functions/createAssignment");
 require("./functions/updateAssignStatus");
 require("./functions/getAssignments");
 require("./functions/me");
+require("./src/functions/getRoutePolyline");
