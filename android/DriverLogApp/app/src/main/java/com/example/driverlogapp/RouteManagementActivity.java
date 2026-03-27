@@ -40,7 +40,7 @@ public class RouteManagementActivity extends AppCompatActivity {
     private Button historyBtn;
     private ImageButton historyExit;
     private FusedLocationProviderClient locationClient;
-    private EditText editText;
+    //private EditText editText;
     private TextView historyText;
     private static final int LOCATION_PERMISSION_REQUEST = 1001;
     private boolean isRunning;
@@ -53,7 +53,7 @@ public class RouteManagementActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        editText = findViewById(R.id.editTextText);
+        //editText = findViewById(R.id.editTextText);
 
         isRunning = false;
 
@@ -116,7 +116,7 @@ public class RouteManagementActivity extends AppCompatActivity {
             //Toast.makeText(this, "Route Started", Toast.LENGTH_SHORT).show();
             //Send blank JSON file with expected headers to backend to start recording route on that end
             routeID = startRoute()[0];
-            editText.setText(routeID);
+            //editText.setText(routeID);
             if (routeID.isEmpty()) {
                 Toast.makeText(this, "Route Failed", Toast.LENGTH_SHORT).show();
                 isRunning = false;
@@ -247,7 +247,7 @@ public class RouteManagementActivity extends AppCompatActivity {
     public String[] stopRoute(String routeID) {
         Toast.makeText(this, routeID, Toast.LENGTH_SHORT).show();
         final String[] summary = {""};
-        editText.setText(fileCheck);
+        //editText.setText(fileCheck);
         Thread stopThread =new Thread(() -> {
             try {
                 String urlString = "https://driverlogbackend-cwe7gpeuamfhffgt.eastus-01.azurewebsites.net/api/routes/" + routeID + "/end";

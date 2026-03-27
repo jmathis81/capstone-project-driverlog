@@ -16,40 +16,52 @@
         android:id="@+id/InnerBorder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="15dp"
         android:background="#9FCC81"
-        tools:layout_editor_absoluteX="15dp"
-        tools:layout_editor_absoluteY="15dp">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <Button
             android:id="@+id/routeControl"
             android:layout_width="163dp"
-            android:layout_height="75dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="56dp"
             android:backgroundTint="#246B19"
             android:text="Start"
             android:textSize="34sp"
+            app:layout_constraintBottom_toTopOf="@+id/history_view"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:strokeColor="#C7B788"
-            app:strokeWidth="3dp"
-            tools:layout_editor_absoluteX="110dp"
-            tools:layout_editor_absoluteY="405dp" />
+            app:strokeWidth="3dp" />
 
         <Button
             android:id="@+id/history_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="17dp"
+            android:layout_marginBottom="82dp"
             android:backgroundTint="#66AFB6"
             android:text="History"
             android:textSize="24sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/routeControl"
             app:strokeColor="#C7B788"
-            app:strokeWidth="3dp"
-            tools:layout_editor_absoluteX="128dp"
-            tools:layout_editor_absoluteY="527dp" />
+            app:strokeWidth="3dp" />
 
         <com.google.android.gms.maps.MapView
             android:id="@+id/mapView2"
-            android:layout_width="297dp"
-            android:layout_height="287dp"
-            tools:layout_editor_absoluteX="43dp"
-            tools:layout_editor_absoluteY="44dp" />
+            android:layout_width="295dp"
+            android:layout_height="310dp"
+            android:layout_marginBottom="76dp"
+            app:layout_constraintBottom_toTopOf="@+id/routeControl"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
