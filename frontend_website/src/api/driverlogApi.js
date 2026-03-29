@@ -68,3 +68,16 @@ export async function updateAssignmentStatus(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export async function getFlaggedEntries() {
+  return authFetch("/flagged", { method: "GET" });
+}
+
+// PATCH resolve or reopen a flagged entry
+export async function updateFlagStatus(flagId, driverId, status) {
+  return authFetch(`/flagged/${flagId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ driverId, status }),
+  });
+}
+ 

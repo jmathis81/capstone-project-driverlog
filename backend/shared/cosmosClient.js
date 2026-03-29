@@ -9,5 +9,6 @@ module.exports = {
   routePoints: database.container("routePoints"),
   routeSummaries: database.container("routeSummaries"),
   users: database.container("users"),
-  assignments: database.container("assignments")
+  assignments: database.container("assignments"),
+  flaggedEntries: database.container("flaggedEntries"),
 };
