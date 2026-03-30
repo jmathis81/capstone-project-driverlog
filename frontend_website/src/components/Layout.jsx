@@ -2,19 +2,21 @@ import Navbar from "./Navbar";
 import { NavLink, Outlet } from "react-router-dom";
 
 const sideLinkClass = ({ isActive }) =>
-  "flex items-center gap-2 px-3 py-2 rounded-lg transition " +
-  (isActive
-    ? "bg-white/15 text-white ring-1 ring-white/15"
-    : "text-white/75 hover:bg-white/10");
+  "flex items-center gap-2 px-3 py-2 rounded-lg transition text-sm font-medium " +
+  (isActive ? "text-white" : "hover:text-white");
+
+const sideLinkStyle = (isActive) => isActive
+  ? { background: "rgba(159,204,129,0.15)", color: "#9FCC81", border: "1px solid rgba(159,204,129,0.25)" }
+  : { color: "#C7B788" };
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
-    
-      <div className="pointer-events-none fixed inset-0 opacity-30">
-        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-fuchsia-500 blur-3xl" />
-        <div className="absolute top-40 -right-24 h-72 w-72 rounded-full bg-sky-500 blur-3xl" />
-        <div className="absolute bottom-10 left-20 h-72 w-72 rounded-full bg-emerald-500 blur-3xl" />
+    <div className="min-h-screen text-white" style={{ background: "linear-gradient(135deg, #1a2a1b 0%, #1e2a2b 50%, #1a2020 100%)" }}>
+      {/* glow blobs */}
+      <div className="pointer-events-none fixed inset-0 opacity-20">
+        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl" style={{ background: "#9FCC81" }} />
+        <div className="absolute top-40 -right-24 h-72 w-72 rounded-full blur-3xl" style={{ background: "#66AFB6" }} />
+        <div className="absolute bottom-10 left-20 h-72 w-72 rounded-full blur-3xl" style={{ background: "#C7B788" }} />
       </div>
 
       <div className="relative min-h-screen flex flex-col">
@@ -22,36 +24,30 @@ export default function Layout() {
 
         <div className="flex flex-1">
           {/* Sidebar */}
-          <aside className="hidden md:flex md:w-64 md:flex-col border-r border-white/10 bg-white/5 backdrop-blur">
-            <div className="px-5 py-4 border-b border-white/10">
+          <aside className="hidden md:flex md:w-64 md:flex-col" style={{ borderRight: "1px solid rgba(199,183,136,0.15)", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(8px)" }}>
+            <div className="px-5 py-4" style={{ borderBottom: "1px solid rgba(199,183,136,0.15)" }}>
               <div className="font-bold text-lg text-white">DriverLog</div>
-              <div className="text-xs text-white/60">Employer Portal</div>
+              <div className="text-xs" style={{ color: "#C7B788" }}>Employer Portal</div>
             </div>
 
             <nav className="p-3 text-sm">
-              <div className="text-xs font-semibold text-white/40 px-3 py-2">
-                HOME
-              </div>
+              <div className="text-xs font-semibold px-3 py-2" style={{ color: "rgba(199,183,136,0.5)" }}>HOME</div>
 
-              <NavLink to="/dashboard" className={sideLinkClass}>
-                <span>📊</span>
-                <span>Dashboard</span>
-              </NavLink>
-
-              <NavLink to="/assignments" className={sideLinkClass}>
-                <span>📦</span>
-                <span>Assignments</span>
-              </NavLink>
-
-              <NavLink to="/reports" className={sideLinkClass}>
-                <span>🧾</span>
-                <span>Reports</span>
-              </NavLink>
-
-              <NavLink to="/flagged" className={sideLinkClass}>
-                <span>🚩</span>
-                <span>Flagged</span>
-              </NavLink>
+              {[
+                { to: "/dashboard", icon: "📊", label: "Dashboard" },
+                { to: "/assignments", icon: "📦", label: "Assignments" },
+                { to: "/reports", icon: "🧾", label: "Reports" },
+                { to: "/flagged", icon: "🚩", label: "Flagged" },
+              ].map(({ to, icon, label }) => (
+                <NavLink key={to} to={to} className={({ isActive }) => "flex items-center gap-2 px-3 py-2 rounded-lg transition text-sm font-medium " + (isActive ? "" : "")}>
+                  {({ isActive }) => (
+                    <div className="flex items-center gap-2 w-full px-3 py-2 rounded-lg transition" style={sideLinkStyle(isActive)}>
+                      <span>{icon}</span>
+                      <span>{label}</span>
+                    </div>
+                  )}
+                </NavLink>
+              ))}
             </nav>
           </aside>
 
@@ -63,7 +59,7 @@ export default function Layout() {
           </main>
         </div>
 
-        <footer className="border-t border-white/10 bg-white/5 backdrop-blur text-sm text-white/60">
+        <footer className="text-sm" style={{ borderTop: "1px solid rgba(199,183,136,0.15)", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(8px)", color: "#C7B788" }}>
           <div className="max-w-6xl mx-auto px-4 py-3">
             © {new Date().getFullYear()} DriverLog
           </div>

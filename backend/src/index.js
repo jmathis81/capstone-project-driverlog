@@ -8,3 +8,5 @@ require("./functions/updateAssignStatus");
 require("./functions/getAssignments");
 require("./functions/me");
 require("./src/functions/getRoutePolyline");
+require("./functions/getFlaggedEntries");
+require("./functions/updateFlagStatus");
