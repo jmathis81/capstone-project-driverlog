@@ -36,7 +36,6 @@ import java.util.List;
 import okhttp3.*;
 
 public class RouteManagementActivity extends AppCompatActivity {
-    // Initial commit comment
     // Declare variables
     private String fileCheck;
     private String routeID;
@@ -345,7 +344,8 @@ public class RouteManagementActivity extends AppCompatActivity {
 
         if (requestCode == LOCATION_PERMISSION_REQUEST && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             // If permission is granted, fetch location
-            routeManagement();
+            // This call is no longer needed because location permissions are effectively called on startup by centerMapOnCurrentLocation()
+            //routeManagement();
         } else {
             // If permission is denied, show message
             Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
