@@ -1,5 +1,6 @@
 package com.example.driverlogapp;
 
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -38,6 +39,8 @@ public class SummaryViewer extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_summary_viewer);
+
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         routeIDText = findViewById(R.id.routeIDText);
         completedAtText = findViewById(R.id.completedAtText);

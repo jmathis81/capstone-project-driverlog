@@ -3,6 +3,7 @@ const { routes, routePoints, routeSummaries } = require("../../shared/cosmosClie
 const { haversineDistance } = require("../../shared/haversine");
 const { requireUser } = require("../../shared/auth");
 const { calculateIdleTime } = require("../../shared/calculateIdleTime");
+const { createFlagEntry } = require("../../shared/flagEntryService");
 
 app.http("endRoute", {
   methods: ["POST"],
@@ -113,7 +114,107 @@ app.http("endRoute", {
         { op: "add", path: "/endTime", value: new Date().toISOString() }
       ]);
 
-      return { status: 200, jsonBody: summary };
+      // 6. Auto-flag suspicious route stats
+      //    Each flag is wrapped in its own try/catch so a failed flag
+      //    never crashes the route end or blocks the other flags.
+      const createdFlags = [];
+
+      async function tryFlag(data) {
+        try {
+          const flag = await createFlagEntry({
+            ...data,
+            driverId: route.userId,
+            driverEmail: route.username || "",
+            sourceType: "routeSummary",
+            sourceId: routeId,
+            createdBy: "system",
+          });
+          createdFlags.push(flag);
+        } catch (flagErr) {
+          context.log("FLAG CREATION ERROR:", flagErr);
+        }
+      }
+
+      // Average speed unusually high
+      if (summary.averageSpeedMph > 85) {
+        await tryFlag({
+          reason: `Average speed is unusually high (${summary.averageSpeedMph.toFixed(1)} mph)`,
+          severity: "High",
+          notes: "Check route data or GPS accuracy.",
+        });
+      }
+
+      // Moving speed unusually high
+      if (summary.averageMovingSpeedMph > 95) {
+        await tryFlag({
+          reason: `Average moving speed is unusually high (${summary.averageMovingSpeedMph.toFixed(1)} mph)`,
+          severity: "High",
+          notes: "Moving speed exceeded expected range.",
+        });
+      }
+
+      // Route lasted several minutes but barely moved
+      if (summary.durationSeconds > 300 && summary.totalDistanceMiles < 0.05) {
+        await tryFlag({
+          reason: "Route lasted several minutes but recorded almost no movement",
+          severity: "Medium",
+          notes: "Possible GPS drift, inactive route, or incorrect tracking.",
+        });
+      }
+
+      // Too few GPS points recorded
+      if (summary.pointCount < 3) {
+        await tryFlag({
+          reason: "Route ended with too few GPS points",
+          severity: "Low",
+          notes: "Not enough data for a reliable route summary.",
+        });
+      }
+
+      // Driver was idle for a long time
+      if (summary.idleSeconds > 1800) {
+        await tryFlag({
+          reason: `Route had unusually high idle time (${Math.round(summary.idleSeconds / 60)} minutes)`,
+          severity: "Medium",
+          notes: "Driver was inactive for a long period during the route.",
+        });
+      }
+
+      // Distance recorded but no moving time calculated
+      if (summary.movingSeconds === 0 && summary.totalDistanceMiles > 0.02) {
+        await tryFlag({
+          reason: "Route recorded distance but no moving time",
+          severity: "High",
+          notes: "Possible calculation issue or inconsistent tracking data.",
+        });
+      }
+
+      // Route ended very quickly — likely accidental or test
+      if (summary.durationSeconds < 30) {
+        await tryFlag({
+          reason: `Route ended very quickly (${Math.round(summary.durationSeconds)} seconds)`,
+          severity: "Low",
+          notes: "Route may have been started and ended by mistake.",
+        });
+      }
+
+      // Long route with zero idle time — driver never stopped
+      if (summary.durationSeconds > 3600 && summary.idleSeconds === 0) {
+        await tryFlag({
+          reason: `Long route recorded with zero idle time (${Math.round(summary.durationSeconds / 3600)} hrs)`,
+          severity: "Medium",
+          notes: "Driver showed no stops during a long route — verify data accuracy.",
+        });
+      }
+
+      return {
+        status: 200,
+        jsonBody: {
+          ...summary,
+          flagsCreated: createdFlags.length,
+          flags: createdFlags,
+        },
+      };
 
     } catch (err) {
       context.log("END ROUTE ERROR:", err);

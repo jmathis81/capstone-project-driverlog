@@ -2,6 +2,7 @@ package com.example.driverlogapp;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -41,14 +42,30 @@ public class MainActivity extends AppCompatActivity {
     private String accessToken;
     private static final String[] scopes = {"api://8a653568-603e-4249-aa36-373da6f46ffa/access_as_user"};
 
+    public static MainActivity instance;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         //editText = findViewById(R.id.editTextText);
-
-
+        instance = this;
         initializeMsal();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        instance = null;
+    }
+
+    public void refreshAccessTokenSilent(SilentAuthenticationCallback callback) {
+        if (mSingleAccountApp == null) return;
+
+        String authority = "https://login.microsoftonline.com/1e398b4b-eeb6-4dba-9585-6ec8a8e4daf3";
+
+        mSingleAccountApp.acquireTokenSilentAsync(scopes, authority, callback);
     }
     private void initializeMsal() {
         PublicClientApplication.createSingleAccountPublicClientApplication(MainActivity.this, R.raw.auth_config, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
@@ -141,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         Intent routeManagementIntent = new Intent(this, RouteManagementActivity.class);
         routeManagementIntent.putExtra("accessToken", accessToken);
         startActivity(routeManagementIntent);
-        finish();
+        //finish();
     }
 
     public String getAuthorizationHeader() {
