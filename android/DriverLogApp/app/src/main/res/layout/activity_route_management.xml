@@ -5,49 +5,65 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#C7B788"
+    android:paddingLeft="15dp"
+    android:paddingTop="15dp"
+    android:paddingRight="15dp"
+    android:paddingBottom="15dp"
     tools:context=".RouteManagementActivity">
 
-    <Button
-        android:id="@+id/routeControl"
-        android:layout_width="163dp"
-        android:layout_height="75dp"
-        android:backgroundTint="#246B19"
-        android:text="Start"
-        android:textSize="34sp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/InnerBorder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="15dp"
+        android:background="#9FCC81"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.564" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <Button
-        android:id="@+id/history_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="163dp"
-        android:layout_marginTop="82dp"
-        android:layout_marginEnd="154dp"
-        android:layout_marginBottom="156dp"
-        android:text="History"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/routeControl"
-        app:layout_constraintVertical_bias="0.0" />
+        <org.osmdroid.views.MapView
+            android:id="@+id/mapDisplay"
+            android:layout_width="267dp"
+            android:layout_height="283dp"
+            android:layout_marginBottom="156dp"
+            app:layout_constraintBottom_toBottomOf="@+id/routeControl"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <EditText
-        android:id="@+id/editTextText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="117dp"
-        android:layout_marginTop="108dp"
-        android:layout_marginEnd="85dp"
-        android:ems="10"
-        android:hint="Route ID"
-        android:inputType="text"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        <Button
+            android:id="@+id/routeControl"
+            android:layout_width="163dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="56dp"
+            android:backgroundTint="#246B19"
+            android:text="Start"
+            android:textSize="34sp"
+            app:layout_constraintBottom_toTopOf="@+id/history_view"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:strokeColor="#C7B788"
+            app:strokeWidth="3dp" />
+
+        <Button
+            android:id="@+id/history_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="17dp"
+            android:layout_marginBottom="82dp"
+            android:backgroundTint="#66AFB6"
+            android:text="History"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/routeControl"
+            app:strokeColor="#C7B788"
+            app:strokeWidth="3dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

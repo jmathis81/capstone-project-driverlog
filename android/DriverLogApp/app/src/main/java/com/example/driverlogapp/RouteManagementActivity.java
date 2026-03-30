@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import android.preference.PreferenceManager;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -23,12 +24,19 @@ import com.microsoft.identity.client.SilentAuthenticationCallback;
 import com.microsoft.identity.client.exception.MsalException;
 
 
+import org.osmdroid.config.Configuration;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Polyline;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.*;
 
 public class RouteManagementActivity extends AppCompatActivity {
-
+    //initial commit comment
     // Declare variables
     private String fileCheck;
     private String routeID;
@@ -36,11 +44,15 @@ public class RouteManagementActivity extends AppCompatActivity {
 
     private String accessToken;
 
+    private MapView mapView;
+    private Polyline polyline;
+    private List<GeoPoint> geoPoints;
+
     private Button getLocationBtn;
     private Button historyBtn;
     private ImageButton historyExit;
     private FusedLocationProviderClient locationClient;
-    private EditText editText;
+    //private EditText editText;
     private TextView historyText;
     private static final int LOCATION_PERMISSION_REQUEST = 1001;
     private boolean isRunning;
@@ -53,7 +65,7 @@ public class RouteManagementActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        editText = findViewById(R.id.editTextText);
+        //editText = findViewById(R.id.editTextText);
 
         isRunning = false;
 
@@ -64,8 +76,21 @@ public class RouteManagementActivity extends AppCompatActivity {
         getLocationBtn = findViewById(R.id.routeControl);
         historyBtn = findViewById(R.id.history_view);
 
+        // Initialize Osmdroid
+        Configuration.getInstance().setUserAgentValue(getPackageName());
+        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+
+        // Initialize MapView from layout
+        mapView = findViewById(R.id.mapDisplay);
+        mapView.setMultiTouchControls(true);
+        mapView.setZoomLevel(20.0);
+        geoPoints = new ArrayList<>();
+
         // Initialize the location provider client
         locationClient = LocationServices.getFusedLocationProviderClient(RouteManagementActivity.this);
+
+        // Center map on user current location
+        centerMapOnCurrentLocation();
 
         // Set a click listener for the button
         getLocationBtn.setOnClickListener(v -> routeManagement());
@@ -116,7 +141,17 @@ public class RouteManagementActivity extends AppCompatActivity {
             //Toast.makeText(this, "Route Started", Toast.LENGTH_SHORT).show();
             //Send blank JSON file with expected headers to backend to start recording route on that end
             routeID = startRoute()[0];
-            editText.setText(routeID);
+            //editText.setText(routeID);
+
+            // Reset polyline when starting new route
+            if (polyline != null) {
+                mapView.getOverlays().remove(polyline);
+                geoPoints.clear();
+                polyline = null;
+            }
+
+            // Center map on user current location
+            centerMapOnCurrentLocation();
             if (routeID.isEmpty()) {
                 Toast.makeText(this, "Route Failed", Toast.LENGTH_SHORT).show();
                 isRunning = false;
@@ -135,6 +170,20 @@ public class RouteManagementActivity extends AppCompatActivity {
                     for (Location location : locationResult.getLocations()) {
                         if (location != null) {
                             routeFile[0] = routeFile[0].concat("{ \"ts\": " + location.getTime() + ", \"lat\": " + location.getLatitude() + ", \"lon\": " + location.getLongitude() + ", \"speed\": " + location.getSpeed() + " }, ");
+
+                            // Add point to polyline
+                            GeoPoint point =new GeoPoint(location.getLatitude(), location.getLongitude());
+                            geoPoints.add(point);
+                            mapView.getController().setCenter(point);
+                            //mapView.setZoomLevel(15.0);
+
+                            if (polyline == null) {
+                                polyline = new Polyline(mapView);
+                                polyline.setPoints(geoPoints);
+                                mapView.getOverlays().add(polyline);
+                            }
+                            polyline.setPoints(geoPoints);
+                            mapView.invalidate();
                         }
                     }
 
@@ -179,6 +228,12 @@ public class RouteManagementActivity extends AppCompatActivity {
             getLocationBtn.setText("Start");
             getLocationBtn.setBackgroundColor(Color.parseColor("#246B19"));
             //Toast.makeText(this, "Route Stopped", Toast.LENGTH_SHORT).show();
+            /*
+            if (polyline != null) {
+                polyline.remove();
+                polyline = null;
+            }
+            */
         }
 
     }
@@ -247,7 +302,7 @@ public class RouteManagementActivity extends AppCompatActivity {
     public String[] stopRoute(String routeID) {
         Toast.makeText(this, routeID, Toast.LENGTH_SHORT).show();
         final String[] summary = {""};
-        editText.setText(fileCheck);
+        //editText.setText(fileCheck);
         Thread stopThread =new Thread(() -> {
             try {
                 String urlString = "https://driverlogbackend-cwe7gpeuamfhffgt.eastus-01.azurewebsites.net/api/routes/" + routeID + "/end";
@@ -332,5 +387,32 @@ public class RouteManagementActivity extends AppCompatActivity {
         });
         refreshThread.setDaemon(true);
         refreshThread.start();
+    }
+
+    private void centerMapOnCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST);
+            return;
+        }
+
+        locationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (location != null) {
+                GeoPoint userLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
+                mapView.getController().setCenter(userLocation);
+                mapView.getController().setZoom(20.0);
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mapView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mapView.onPause();
     }
 }
