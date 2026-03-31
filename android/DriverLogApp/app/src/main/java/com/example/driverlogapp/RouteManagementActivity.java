@@ -137,6 +137,8 @@ public class RouteManagementActivity extends AppCompatActivity {
             isRunning = true;
             getLocationBtn.setText("Stop");
             getLocationBtn.setBackgroundColor(Color.RED);
+            historyBtn.setVisibility(View.INVISIBLE);
+            historyBtn.setClickable(false);
             //Toast.makeText(this, "Route Started", Toast.LENGTH_SHORT).show();
             //Send blank JSON file with expected headers to backend to start recording route on that end
             routeID = startRoute()[0];
@@ -226,6 +228,8 @@ public class RouteManagementActivity extends AppCompatActivity {
             summary = stopRoute(routeID)[0];
             getLocationBtn.setText("Start");
             getLocationBtn.setBackgroundColor(Color.parseColor("#246B19"));
+            historyBtn.setVisibility(View.VISIBLE);
+            historyBtn.setClickable(true);
             //Toast.makeText(this, "Route Stopped", Toast.LENGTH_SHORT).show();
             /*
             if (polyline != null) {
