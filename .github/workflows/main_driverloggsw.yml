@@ -24,6 +24,7 @@ jobs:
         working-directory: frontend_website
         env:
           VITE_REDIRECT_URI: https://driverloggsw.azurewebsites.net
+          VITE_AZURE_MAPS_KEY: ${{ secrets.AZURE_MAPS_KEY }}
         run: |
           npm install
           npm run build
