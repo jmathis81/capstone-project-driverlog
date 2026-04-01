@@ -81,3 +81,9 @@ export async function updateFlagStatus(flagId, driverId, status) {
   });
 }
  
+export async function deleteAssignment(assignmentId, driverId) {
+  return authFetch(`/assignments/${assignmentId}`, {
+    method: "DELETE",
+    body: JSON.stringify({ driverId }),
+  });
+}

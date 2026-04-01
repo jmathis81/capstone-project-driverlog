@@ -10,3 +10,4 @@ require("./functions/me");
 require("./src/functions/getRoutePolyline");
 require("./functions/getFlaggedEntries");
 require("./functions/updateFlagStatus");
+require("./functions/deleteAssignment");

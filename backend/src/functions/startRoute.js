@@ -34,7 +34,7 @@ app.http("startRoute", {
 
       await routes.items.create(route);
 
-      // Check if driver has any active assignments (Open or InProgress)
+      // Check if driver has any active assignments (Open or In progress)
       // Route is still created regardless — we never block the driver,
       // we just flag it for the manager/admin to review.
       try {
@@ -43,7 +43,7 @@ app.http("startRoute", {
             query: `
               SELECT TOP 1 c.id FROM c
               WHERE c.driverId = @driverId
-              AND (c.status = "Open" OR c.status = "InProgress")
+              AND (c.status = "Open" OR c.status = "In progress")
             `,
             parameters: [{ name: "@driverId", value: user.userId }],
           })

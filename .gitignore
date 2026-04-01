@@ -122,3 +122,4 @@ dist-ssr
 *.sln
 *.sw?
 4671db1 (Initial website setup)
+.env.local

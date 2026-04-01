@@ -13,7 +13,19 @@ app.http("getFlaggedEntries", {
       const authUser = requireUser(req);
       const user = await getOrCreateUser(authUser);
 
-      // Only Admin and Manager can view flagged entries
+      // DRIVER: can only see their own flags (read-only)
+      if (user.role === "Driver") {
+        const { resources } = await flaggedEntries.items
+          .query({
+            query: "SELECT * FROM c WHERE c.driverId = @driverId ORDER BY c.createdAt DESC",
+            parameters: [{ name: "@driverId", value: user.userId }],
+          })
+          .fetchAll();
+
+        return { status: 200, jsonBody: resources };
+      }
+
+      // Only Admin and Manager can view all flagged entries
       if (user.role !== "Admin" && user.role !== "Manager") {
         return { status: 403, jsonBody: { error: "Forbidden" } };
       }

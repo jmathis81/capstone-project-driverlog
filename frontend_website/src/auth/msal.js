@@ -8,9 +8,9 @@ export const msalConfig = {
     // Azure tenant ID
     authority: "https://login.microsoftonline.com/1e398b4b-eeb6-4dba-9585-6ec8a8e4daf3",
     // Where users are redirected after login
-    redirectUri: "http://localhost:5173",
+    redirectUri: import.meta.env.VITE_REDIRECT_URI,
     // Where users go after logout
-    postLogoutRedirectUri: "http://localhost:5173/Login",
+    postLogoutRedirectUri: `${import.meta.env.VITE_REDIRECT_URI}/Login`,
   },
   cache: {
     // Store login session in browser session storage and clears when browser tab closes
