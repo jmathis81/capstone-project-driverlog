@@ -36,7 +36,6 @@ import java.util.List;
 import okhttp3.*;
 
 public class RouteManagementActivity extends AppCompatActivity {
-    //initial commit comment
     // Declare variables
     private String fileCheck;
     private String routeID;
@@ -138,6 +137,8 @@ public class RouteManagementActivity extends AppCompatActivity {
             isRunning = true;
             getLocationBtn.setText("Stop");
             getLocationBtn.setBackgroundColor(Color.RED);
+            historyBtn.setVisibility(View.INVISIBLE);
+            historyBtn.setClickable(false);
             //Toast.makeText(this, "Route Started", Toast.LENGTH_SHORT).show();
             //Send blank JSON file with expected headers to backend to start recording route on that end
             routeID = startRoute()[0];
@@ -227,6 +228,8 @@ public class RouteManagementActivity extends AppCompatActivity {
             summary = stopRoute(routeID)[0];
             getLocationBtn.setText("Start");
             getLocationBtn.setBackgroundColor(Color.parseColor("#246B19"));
+            historyBtn.setVisibility(View.VISIBLE);
+            historyBtn.setClickable(true);
             //Toast.makeText(this, "Route Stopped", Toast.LENGTH_SHORT).show();
             /*
             if (polyline != null) {
@@ -345,7 +348,8 @@ public class RouteManagementActivity extends AppCompatActivity {
 
         if (requestCode == LOCATION_PERMISSION_REQUEST && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             // If permission is granted, fetch location
-            routeManagement();
+            // This call is no longer needed because location permissions are effectively called on startup by centerMapOnCurrentLocation()
+            //routeManagement();
         } else {
             // If permission is denied, show message
             Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
