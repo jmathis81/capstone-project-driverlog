@@ -111,10 +111,11 @@ app.http("createAssignment", {
       // create assignment object
       const doc = {
         id: `a-${crypto.randomUUID()}`, // unique assignment id
-        driverId, // partition key 
+        driverId, // partition key
         driverEmail, // driver email for display in UI
         createdById: user.userId, // user who created the assignment
-        createdByRole: user.role, // role of creater (Admin or Manager)
+        createdByEmail: user.username, // email of creator for "Assigned by" display in UI
+        createdByRole: user.role, // role of creator (Admin or Manager)
         title, // assignment title
         notes, // assignment notes or instructions
         priority, // assignment priority level

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getAssignments, createAssignment, updateAssignmentStatus, getMe } from "../api/driverlogAPI";
+import { getAssignments, createAssignment, updateAssignmentStatus, deleteAssignment, getMe } from "../api/driverlogAPI";
 
 function driverLabel(a) {
   return a.driverEmail || a.driverId || "Unknown driver";
@@ -40,7 +40,7 @@ function DriverBadge({ value }) {
     <div className="flex items-center gap-2 min-w-0">
       <span className={`h-2.5 w-2.5 rounded-full ${theme.dot} shrink-0`} title={v} />
       <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${theme.bg} ${theme.text} ${theme.ring} min-w-0`} title={v}>
-        <span className="truncate max-w-[260px] sm:max-w-[320px] md:max-w-[360px]">{v || "Unknown driver"}</span>
+        <span className="break-all">{v || "Unknown driver"}</span>
       </span>
     </div>
   );
@@ -56,6 +56,12 @@ export default function Assignments() {
   const [driverEmail, setDriverEmail] = useState("");
   const [priority, setPriority] = useState("Normal");
   const [notes, setNotes] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [showAllAssignments, setShowAllAssignments] = useState(false);
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [search, setSearch] = useState("");
 
   async function loadAll() {
     try {
@@ -88,12 +94,31 @@ export default function Assignments() {
   };
 
   const sortedAssignments = useMemo(() => {
-    return [...assignments].sort((a, b) => {
-      const da = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-      const db = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-      return db - da;
-    });
-  }, [assignments]);
+    const q = search.trim().toLowerCase();
+    return [...assignments]
+      .filter((a) => {
+        if (filterStatus !== "All") {
+          const v = (a.status || "Open").toLowerCase();
+          if (filterStatus === "Open" && v !== "open") return false;
+          if (filterStatus === "In progress" && !v.includes("progress")) return false;
+          if (filterStatus === "Completed" && !v.includes("complete")) return false;
+        }
+        if (q) {
+          return (
+            (a.title || "").toLowerCase().includes(q) ||
+            (a.driverEmail || "").toLowerCase().includes(q) ||
+            (a.driverId || "").toLowerCase().includes(q) ||
+            (a.createdByEmail || "").toLowerCase().includes(q)
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const da = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const db = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return db - da;
+      });
+  }, [assignments, filterStatus, search]);
 
   async function onCreate(e) {
     e.preventDefault();
@@ -121,12 +146,29 @@ export default function Assignments() {
     }
   }
 
+  async function handleDelete(a) {
+    setDeletingId(a.id);
+    try {
+      await deleteAssignment(a.id, a.driverId);
+      setAssignments((prev) => prev.filter((x) => x.id !== a.id));
+      setConfirmDeleteId(null);
+    } catch (e) {
+      setError(e?.message || "Failed to delete assignment");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function toggleExpand(id) {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }
+
   const inputStyle = { background: "rgba(0,0,0,0.25)", border: "1px solid rgba(199,183,136,0.3)", color: "white" };
   const focusClass = "outline-none focus:ring-2";
+  const colSpan = canUpdateStatus ? 7 : isCreator ? 7 : 6;
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #1a2a1b 0%, #1e2a2b 50%, #1a2020 100%)" }}>
-      {/* glow blobs */}
       <div className="pointer-events-none fixed inset-0 opacity-20">
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl" style={{ background: "#9FCC81" }} />
         <div className="absolute top-40 -right-24 h-72 w-72 rounded-full blur-3xl" style={{ background: "#66AFB6" }} />
@@ -163,11 +205,10 @@ export default function Assignments() {
               </div>
               <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(159,204,129,0.15)", color: "#9FCC81", border: "1px solid rgba(159,204,129,0.3)" }}>Live</span>
             </div>
-
             <form onSubmit={onCreate} className="mt-5 grid md:grid-cols-3 gap-4">
               <div className="md:col-span-1">
                 <label className="text-xs font-semibold" style={{ color: "#C7B788" }}>Title *</label>
-                <input value={title} onChange={(e) => setTitle(e.target.value)} className={`mt-2 w-full rounded-xl px-3 py-2 placeholder:text-white/30 ${focusClass}`} style={{ ...inputStyle, focusRingColor: "#66AFB6" }} placeholder="Deliver supplies" />
+                <input value={title} onChange={(e) => setTitle(e.target.value)} className={`mt-2 w-full rounded-xl px-3 py-2 placeholder:text-white/30 ${focusClass}`} style={inputStyle} placeholder="Deliver supplies" />
               </div>
               <div className="md:col-span-1">
                 <label className="text-xs font-semibold" style={{ color: "#C7B788" }}>Driver ID or Email *</label>
@@ -194,18 +235,45 @@ export default function Assignments() {
 
         {role === "Driver" && (
           <div className="rounded-3xl p-5" style={{ border: "1px solid rgba(199,183,136,0.2)", background: "rgba(255,255,255,0.04)" }}>
-            <p className="text-sm" style={{ color: "#C7B788" }}>You're signed in as a <span className="font-semibold text-white">Driver</span>. You can update your assignment status.</p>
+            <p className="text-sm" style={{ color: "#C7B788" }}>You're signed in as a <span className="font-semibold text-white">Driver</span>. You can update your assignment status below.</p>
           </div>
         )}
 
         {/* Table */}
         <div className="rounded-3xl shadow-sm overflow-hidden" style={{ border: "1px solid rgba(199,183,136,0.2)", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(8px)" }}>
-          <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(199,183,136,0.15)", background: "rgba(0,0,0,0.1)" }}>
+          <div className="px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderBottom: "1px solid rgba(199,183,136,0.15)", background: "rgba(0,0,0,0.1)" }}>
             <div>
               <h2 className="text-lg font-semibold text-white">Assignments</h2>
-              <p className="text-sm mt-1" style={{ color: "#C7B788" }}>Live Data</p>
+              <p className="text-sm mt-1" style={{ color: "#C7B788" }}>Click a row to expand and see full notes.</p>
             </div>
-            <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(102,175,182,0.15)", color: "#66AFB6", border: "1px solid rgba(102,175,182,0.3)" }}>Count: {sortedAssignments.length}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Search */}
+              <input
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setShowAllAssignments(false); }}
+                placeholder="Search title or driver..."
+                className="rounded-xl px-3 py-1.5 text-sm placeholder:text-white/30 outline-none"
+                style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(199,183,136,0.3)", color: "white", width: "200px" }}
+              />
+              {/* Status filter buttons */}
+              {["All", "Open", "In progress", "Completed"].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => { setFilterStatus(f); setShowAllAssignments(false); }}
+                  className="rounded-full px-3 py-1 text-xs font-semibold transition"
+                  style={{
+                    background: filterStatus === f ? "#66AFB6" : "rgba(102,175,182,0.1)",
+                    color: filterStatus === f ? "white" : "#66AFB6",
+                    border: `1px solid ${filterStatus === f ? "#66AFB6" : "rgba(102,175,182,0.3)"}`,
+                  }}
+                >
+                  {f}
+                </button>
+              ))}
+              <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(102,175,182,0.15)", color: "#66AFB6", border: "1px solid rgba(102,175,182,0.3)" }}>
+                {sortedAssignments.length}
+              </span>
+            </div>
           </div>
 
           <div className="overflow-auto">
@@ -214,43 +282,164 @@ export default function Assignments() {
                 <tr style={{ borderBottom: "1px solid rgba(199,183,136,0.15)" }}>
                   <th className="py-3 px-6 font-semibold">Title</th>
                   <th className="py-3 px-6 font-semibold">Driver</th>
+                  <th className="py-3 px-6 font-semibold">Assigned by</th>
                   <th className="py-3 px-6 font-semibold">Priority</th>
                   <th className="py-3 px-6 font-semibold">Status</th>
                   <th className="py-3 px-6 font-semibold text-right">Updated</th>
-                  {canUpdateStatus && <th className="py-3 px-6 font-semibold text-right">Action</th>}
+                  {(canUpdateStatus || isCreator) && <th className="py-3 px-6 font-semibold text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody>
-                {sortedAssignments.map((a) => (
-                  <tr key={a.id} className="hover:bg-white/5" style={{ borderBottom: "1px solid rgba(199,183,136,0.08)" }}>
-                    <td className="py-4 px-6 font-semibold text-white">
-                      {a.title || "(no title)"}
-                      {a.notes ? <div className="mt-1 text-xs line-clamp-1" style={{ color: "#C7B788" }}>{a.notes}</div> : null}
-                    </td>
-                    <td className="px-6"><DriverBadge value={driverLabel(a)} /></td>
-                    <td className="px-6" style={{ color: "#C7B788" }}>{a.priority || "Normal"}</td>
-                    <td className="px-6">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${statusPill(a.status)}`}>{a.status || "Open"}</span>
-                    </td>
-                    <td className="px-6 text-right" style={{ color: "#C7B788" }}>{prettyDate(a.updatedAt || a.createdAt)}</td>
-                    {canUpdateStatus ? (
-                      <td className="px-6 text-right">
-                        <div className="inline-flex gap-2">
-                          <button onClick={() => setAssignmentStatus(a, "In progress")} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(199,183,136,0.25)" }}>In progress</button>
-                          <button onClick={() => setAssignmentStatus(a, "Completed")} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white" style={{ background: "#9FCC81", color: "#1a2a1b" }}>Complete</button>
+                {(showAllAssignments ? sortedAssignments : sortedAssignments.slice(0, 20)).map((a) => {
+                  const isExpanded = expandedId === a.id;
+                  const hasNotes = a.notes && a.notes.trim().length > 0;
+                  const isConfirming = confirmDeleteId === a.id;
+                  const isDeleting = deletingId === a.id;
+                  const assignedBy = a.driverEmail !== a.createdById
+                    ? (a.createdByEmail || a.createdById || "Unknown")
+                    : "Unknown";
+
+                  return [
+                    <tr
+                      key={a.id}
+                      onClick={() => hasNotes && toggleExpand(a.id)}
+                      className="hover:bg-white/5"
+                      style={{
+                        borderBottom: isExpanded ? "none" : "1px solid rgba(199,183,136,0.08)",
+                        cursor: hasNotes ? "pointer" : "default",
+                      }}
+                    >
+                      {/* Title */}
+                      <td className="py-4 px-6 font-semibold text-white">
+                        <div className="flex items-center gap-2">
+                          <span>{a.title || "(no title)"}</span>
+                          {hasNotes && (
+                            <span style={{ color: "#9FCC81", fontSize: "9px", display: "inline-block", transition: "transform 0.15s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+                          )}
+                        </div>
+                        {hasNotes && !isExpanded && (
+                          <div className="mt-1 text-xs line-clamp-1" style={{ color: "#C7B788" }}>{a.notes}</div>
+                        )}
+                      </td>
+
+                      {/* Driver */}
+                      <td className="px-6 py-4"><DriverBadge value={driverLabel(a)} /></td>
+
+                      {/* Assigned by */}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          {a.createdByRole && (
+                            <span className="inline-flex items-center self-start rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(102,175,182,0.12)", color: "#66AFB6", border: "1px solid rgba(102,175,182,0.2)" }}>
+                              {a.createdByRole}
+                            </span>
+                          )}
+                          <span className="text-xs break-all" style={{ color: "#C7B788" }} title={a.createdByEmail || a.createdById || "—"}>
+                            {a.createdByEmail
+                              ? a.createdByEmail
+                              : a.createdById
+                              ? `ID: ${a.createdById.slice(0, 8)}...`
+                              : "—"}
+                          </span>
                         </div>
                       </td>
-                    ) : null}
-                  </tr>
-                ))}
+
+                      {/* Priority */}
+                      <td className="px-6 py-4" style={{ color: "#C7B788" }}>{a.priority || "Normal"}</td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${statusPill(a.status)}`}>{a.status || "Open"}</span>
+                      </td>
+
+                      {/* Updated */}
+                      <td className="px-6 py-4 text-right" style={{ color: "#C7B788" }}>{prettyDate(a.updatedAt || a.createdAt)}</td>
+
+                      {/* Actions */}
+                      {(canUpdateStatus || isCreator) && (
+                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="inline-flex gap-2 items-center">
+                            {/* Driver status buttons */}
+                            {canUpdateStatus && (
+                              <>
+                                <button onClick={() => setAssignmentStatus(a, "In progress")} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(199,183,136,0.25)" }}>In progress</button>
+                                <button onClick={() => setAssignmentStatus(a, "Completed")} className="rounded-lg px-3 py-1.5 text-xs font-semibold" style={{ background: "#9FCC81", color: "#1a2a1b" }}>Complete</button>
+                              </>
+                            )}
+
+                            {/* Delete button for Admin/Manager */}
+                            {isCreator && !isConfirming && (
+                              <button
+                                onClick={() => setConfirmDeleteId(a.id)}
+                                className="rounded-lg px-3 py-1.5 text-xs font-semibold"
+                                style={{ background: "rgba(200,60,60,0.12)", border: "1px solid rgba(200,60,60,0.25)", color: "#f87171" }}
+                              >
+                                Delete
+                              </button>
+                            )}
+
+                            {/* Confirm delete */}
+                            {isCreator && isConfirming && (
+                              <>
+                                <span className="text-xs" style={{ color: "#C7B788" }}>Sure?</span>
+                                <button
+                                  onClick={() => handleDelete(a)}
+                                  disabled={isDeleting}
+                                  className="rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
+                                  style={{ background: "rgba(200,60,60,0.8)", color: "white" }}
+                                >
+                                  {isDeleting ? "..." : "Yes"}
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(199,183,136,0.25)" }}
+                                >
+                                  No
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>,
+
+                    // Expanded notes row
+                    isExpanded && hasNotes ? (
+                      <tr key={`${a.id}-expanded`} style={{ borderBottom: "1px solid rgba(199,183,136,0.08)", background: "rgba(159,204,129,0.03)" }}>
+                        <td colSpan={colSpan} className="px-6 pb-4 pt-1">
+                          <div className="rounded-xl px-4 py-3" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(199,183,136,0.2)" }}>
+                            <p className="text-xs font-semibold mb-1.5" style={{ color: "#9FCC81" }}>Full Notes</p>
+                            <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: "#e8e4d8" }}>{a.notes}</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null,
+                  ];
+                })}
                 {sortedAssignments.length === 0 && (
-                  <tr><td className="px-6 py-10" style={{ color: "#C7B788" }} colSpan={canUpdateStatus ? 6 : 5}>No assignments yet.</td></tr>
+                  <tr><td className="px-6 py-10" style={{ color: "#C7B788" }} colSpan={colSpan}>No assignments yet.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
+
           <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: "1px solid rgba(199,183,136,0.15)", background: "rgba(0,0,0,0.1)" }}>
-            <p className="text-xs" style={{ color: "#C7B788" }}>Next: Add filters (Open / In progress / Completed)</p>
+            <p className="text-xs" style={{ color: "#C7B788" }}>
+              {sortedAssignments.length > 20
+                ? showAllAssignments
+                  ? `Showing all ${sortedAssignments.length} assignments`
+                  : `Showing 20 of ${sortedAssignments.length} assignments`
+                : "Click any row with notes to expand. Admins and Managers can delete assignments."}
+            </p>
+            {sortedAssignments.length > 20 && (
+              <button
+                onClick={() => setShowAllAssignments(!showAllAssignments)}
+                className="text-sm font-semibold"
+                style={{ color: "#9FCC81" }}
+              >
+                {showAllAssignments ? "Show less ↑" : `View all (${sortedAssignments.length}) →`}
+              </button>
+            )}
           </div>
         </div>
       </div>

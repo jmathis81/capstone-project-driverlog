@@ -13,6 +13,7 @@ require("./src/functions/getAssignments");
 require("./src/functions/getRoutePolyline");
 require("./src/functions/getFlaggedEntries");
 require("./src/functions/updateFlagStatus");
+require("./src/functions/deleteAssignment");
 
 // Set up the Functions app
 app.setup({ enableHttpStream: true });

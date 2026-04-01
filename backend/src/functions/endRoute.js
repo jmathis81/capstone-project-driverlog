@@ -52,7 +52,40 @@ app.http("endRoute", {
       }).fetchAll();
 
       if (points.length < 2) {
-        return { status: 400, body: "Not enough points to calculate distance" };
+        // Save a minimal summary and flag it — don't block the route from ending
+        const minimalSummary = {
+          id: routeId,
+          routeId,
+          userId: route.userId,
+          username: route.username,
+          pointCount: points.length,
+          durationSeconds: 0,
+          totalDistanceMeters: 0,
+          totalDistanceMiles: 0,
+          averageMovingSpeedMph: 0,
+          averageSpeedMph: 0,
+          idleSeconds: 0,
+          movingSeconds: 0,
+          completedAt: new Date().toISOString(),
+        };
+        await routeSummaries.items.upsert(minimalSummary);
+        await routes.item(route.id, route.userId).patch([
+          { op: "replace", path: "/status", value: "completed" },
+          { op: "add", path: "/endTime", value: new Date().toISOString() },
+        ]);
+        try {
+          await createFlagEntry({
+            driverId: route.userId,
+            driverEmail: route.username || "",
+            reason: "Route ended with too few GPS points",
+            severity: "Low",
+            notes: "Not enough data for a reliable route summary. Speed and distance readings may be inaccurate.",
+            sourceType: "routeSummary",
+            sourceId: routeId,
+            createdBy: "system",
+          });
+        } catch (_) {}
+        return { status: 200, jsonBody: { ...minimalSummary, flagsCreated: 1 } };
       }
 
       // 3. Calculate distance
@@ -135,8 +168,14 @@ app.http("endRoute", {
         }
       }
 
-      // Average speed unusually high
-      if (summary.averageSpeedMph > 85) {
+      // Minimum points needed for reliable speed/distance flags.
+      // Routes with fewer than 5 points don't have enough GPS data
+      // to produce accurate speed or distance readings, so we skip
+      // speed-based flags entirely for them.
+      const hasEnoughPoints = summary.pointCount >= 5;
+
+      // Average speed unusually high (only flag if enough GPS data)
+      if (hasEnoughPoints && summary.averageSpeedMph > 85) {
         await tryFlag({
           reason: `Average speed is unusually high (${summary.averageSpeedMph.toFixed(1)} mph)`,
           severity: "High",
@@ -144,8 +183,8 @@ app.http("endRoute", {
         });
       }
 
-      // Moving speed unusually high
-      if (summary.averageMovingSpeedMph > 95) {
+      // Moving speed unusually high (only flag if enough GPS data)
+      if (hasEnoughPoints && summary.averageMovingSpeedMph > 95) {
         await tryFlag({
           reason: `Average moving speed is unusually high (${summary.averageMovingSpeedMph.toFixed(1)} mph)`,
           severity: "High",
@@ -154,7 +193,7 @@ app.http("endRoute", {
       }
 
       // Route lasted several minutes but barely moved
-      if (summary.durationSeconds > 300 && summary.totalDistanceMiles < 0.05) {
+      if (hasEnoughPoints && summary.durationSeconds > 300 && summary.totalDistanceMiles < 0.05) {
         await tryFlag({
           reason: "Route lasted several minutes but recorded almost no movement",
           severity: "Medium",
@@ -163,16 +202,16 @@ app.http("endRoute", {
       }
 
       // Too few GPS points recorded
-      if (summary.pointCount < 3) {
+      if (summary.pointCount < 5) {
         await tryFlag({
           reason: "Route ended with too few GPS points",
           severity: "Low",
-          notes: "Not enough data for a reliable route summary.",
+          notes: "Not enough data for a reliable route summary. Speed and distance readings may be inaccurate.",
         });
       }
 
-      // Driver was idle for a long time
-      if (summary.idleSeconds > 1800) {
+      // Driver was idle for a long time (only meaningful with enough data)
+      if (hasEnoughPoints && summary.idleSeconds > 1800) {
         await tryFlag({
           reason: `Route had unusually high idle time (${Math.round(summary.idleSeconds / 60)} minutes)`,
           severity: "Medium",
@@ -181,7 +220,7 @@ app.http("endRoute", {
       }
 
       // Distance recorded but no moving time calculated
-      if (summary.movingSeconds === 0 && summary.totalDistanceMiles > 0.02) {
+      if (hasEnoughPoints && summary.movingSeconds === 0 && summary.totalDistanceMiles > 0.02) {
         await tryFlag({
           reason: "Route recorded distance but no moving time",
           severity: "High",
@@ -199,7 +238,7 @@ app.http("endRoute", {
       }
 
       // Long route with zero idle time — driver never stopped
-      if (summary.durationSeconds > 3600 && summary.idleSeconds === 0) {
+      if (hasEnoughPoints && summary.durationSeconds > 3600 && summary.idleSeconds === 0) {
         await tryFlag({
           reason: `Long route recorded with zero idle time (${Math.round(summary.durationSeconds / 3600)} hrs)`,
           severity: "Medium",
