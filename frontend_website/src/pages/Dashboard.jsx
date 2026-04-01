@@ -330,7 +330,7 @@ export default function Dashboard() {
       if (!el) return;
 
       const map = new window.atlas.Map("driver-route-map", {
-        authOptions: { authType: "subscriptionKey", subscriptionKey: "BnZz7Kdh12bBuFF9hx8QXbuIWyNoFN5fJSRXVI8ABjmzRZ40bxonJQQJ99CAACYeBjFUlTo2AAAgAZMP4Gxr" },
+        authOptions: { authType: "subscriptionKey", subscriptionKey: import.meta.env.VITE_AZURE_MAPS_KEY },
         style: "road",
         language: "en-US",
         renderWorldCopies: false,
