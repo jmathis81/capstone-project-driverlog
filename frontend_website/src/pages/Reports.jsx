@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { getSummaries } from "../api/driverlogAPI";
+import { getSummaries } from "../api/driverlogApi";
 
 // Check if a date string falls on a specific local date
 function isOnDate(dateStr, targetDate) {
