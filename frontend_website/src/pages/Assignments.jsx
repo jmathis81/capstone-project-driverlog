@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getAssignments, createAssignment, updateAssignmentStatus, deleteAssignment, getMe } from "../api/driverlogAPI";
+import { getAssignments, createAssignment, updateAssignmentStatus, deleteAssignment, getMe } from "../api/driverlogApi";
 
 function driverLabel(a) {
   return a.driverEmail || a.driverId || "Unknown driver";

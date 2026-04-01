@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getFlaggedEntries, updateFlagStatus, getMe } from "../api/driverlogAPI";
+import { getFlaggedEntries, updateFlagStatus, getMe } from "../api/driverlogApi";
 
 function hashString(str) {
   const s = String(str || "");
