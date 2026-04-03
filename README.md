@@ -35,6 +35,8 @@ User Instructions:
    - The reports page that will allow you to see the drivers Daily Reports and Weekly Reports
    - The flagged page still has placeholders, but will include real data soon
 5. Log out when finished.
+# Frontend Website PUBLIC DOMAIN
+https://salmon-smoke-0a03eb20f.1.azurestaticapps.net
 
 # BACKEND Info
 Using Azure Functions for API endpoints and Cosmos DB for database to store route information.
