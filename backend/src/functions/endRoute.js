@@ -4,6 +4,7 @@ const { haversineDistance } = require("../../shared/haversine");
 const { requireUser } = require("../../shared/auth");
 const { calculateIdleTime } = require("../../shared/calculateIdleTime");
 const { createFlagEntry } = require("../../shared/flagEntryService");
+const { calculateMaxRollingSpeed } = require("../../shared/metrics");
 
 app.http("endRoute", {
   methods: ["POST"],
@@ -109,6 +110,9 @@ app.http("endRoute", {
       // Calculate idle time
       const idleSeconds = calculateIdleTime(points);
 
+      // Calculate max rolling speed (for potential flags and summary notes)
+      const maxSpeedMph = calculateMaxRollingSpeed(points);
+
       // Calculate moving time
       const movingSeconds = Math.max(0, durationSeconds - idleSeconds);
 
@@ -132,6 +136,7 @@ app.http("endRoute", {
         totalDistanceMiles: totalDistanceMeters / 1609.344,
         averageMovingSpeedMph: avgMovingSpeedMps * 2.23694,
         averageSpeedMph: avgSpeedMps * 2.23694,
+        maxSpeedMph,
         idleSeconds,
         movingSeconds,
 
